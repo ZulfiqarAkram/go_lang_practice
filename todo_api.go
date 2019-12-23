@@ -14,17 +14,17 @@ type todoItem struct {
 	Text string `json:text`
 }
 
-var todoDB []todoItem
-
-func main() {
-	todoDB = append(todoDB, todoItem{
+var todoDB = []todoItem{
+	todoItem{
 		ID:   1,
 		Text: "hello",
 	}, todoItem{
 		ID:   2,
 		Text: "world",
-	})
+	},
+}
 
+func main() {
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api").Subrouter()
 
@@ -42,7 +42,7 @@ func AddItem(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&newTodo)
 	newTodo.ID = len(todoDB) + 1
 	todoDB = append(todoDB, newTodo)
-	fmt.Println("Item added.")
+	fmt.Println("AFTER ADDED : ", todoDB)
 	json.NewEncoder(w).Encode(newTodo)
 }
 
@@ -56,16 +56,17 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 		}
 		if item.ID == int(id) {
 			todoDB = append(todoDB[:index], todoDB[index+1:]...)
-			fmt.Println("item removed.")
-			return
+			fmt.Println("AFTER REMOVED : ", todoDB)
+			break
 		}
 	}
-
+	json.NewEncoder(w).Encode(todoDB)
 }
 
 func UpdateItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	var todoToBeUpdate todoItem
 	params := mux.Vars(r)
 	for index, item := range todoDB {
 		id, err := strconv.ParseInt(params["id"], 16, 64)
@@ -74,20 +75,19 @@ func UpdateItem(w http.ResponseWriter, r *http.Request) {
 		}
 		if item.ID == int(id) {
 			todoDB = append(todoDB[:index], todoDB[index+1:]...)
-			var todoToBeUpdate todoItem
 			json.NewDecoder(r.Body).Decode(&todoToBeUpdate)
 			todoToBeUpdate.ID = int(id)
 			todoDB = append(todoDB, todoToBeUpdate)
-			json.NewEncoder(w).Encode(todoToBeUpdate)
-			fmt.Println("item updated.")
-			return
+			fmt.Println("AFTER UPDATED : ", todoDB)
+			break
 		}
 	}
+	json.NewEncoder(w).Encode(todoToBeUpdate)
 
 }
 
 func DisplayItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	fmt.Println("LIST : ", todoDB)
 	json.NewEncoder(w).Encode(todoDB)
-
 }
